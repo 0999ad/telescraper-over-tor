@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TeleScrape Dashboard</title>
+    <!-- Favicon -->
+    <link rel="icon" href="{{ url_for('static', filename='lcnr.jpg') }}" type="image/jpeg">
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #2b2b2b;
+            color: #ffffff;
+            padding: 20px;
+        }
+        .info-container, .warning-container {
+            padding: 20px;
+            background-color: #1a1a1a;
+            color: #00baff;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 186, 255, 0.7);
+            margin: 20px auto;
+        }
+        .result {
+            background-color: #1a1a1a;
+            color: #00baff;
+            border: 1px solid #333;
+            border-radius: 5px;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        .keywords-input, .add-channel, .add-whitelist-ip, .restart-scrape, .logout {
+            margin-bottom: 20px;
+        }
+        .btn-primary, .btn-success, .btn-secondary, .btn-info, .btn-danger {
+            background-color: #00baff;
+            border-color: #00baff;
+        }
+        .btn-primary:hover, .btn-success:hover, .btn-secondary:hover, .btn-info:hover, .btn-danger:hover {
+            background-color: #008fc4;
+            border-color: #008fc4;
+        }
+        /* Logo styling */
+        .logo {
+            max-height: 50px;
+            margin-right: 10px;
+        }
+        /* Center the title */
+        .header-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .title-container {
+            flex-grow: 1;
+            text-align: center;
+        }
+        /* Align username to the left */
+        .user-container {
+            text-align: left;
+            margin-top: 10px;
+        }
+        .file-downloads {
+            margin-top: 20px;
+        }
+        .list-group-item {
+            background-color: #1a1a1a;
+            color: #00baff;
+            border: 1px solid #333;
+        }
+    </style>
+</head>
+<body class="text-light bg-dark">
+    <div class="container-fluid">
+        <div class="header-container">
+            <div class="d-flex align-items-center">
+                <!-- Logo -->
+                <img src="{{ url_for('static', filename='lcnr.jpg') }}" alt="Logo" class="logo">
+            </div>
+            <div class="title-container">
+                <h1 class="mb-0">TeleScrape Dashboard</h1>
+            </div>
+        </div>
+        <div class="user-container">
+            <h3>Welcome, {{ username }}</h3>
+        </div>
+        <div class="info-container">
+            <p>Tor Connection: <strong>{{ 'Connected' if tor_connected else 'Not connected' }}</strong></p>
+            <p>Tor IP Address: <strong>{{ tor_ip }}</strong></p>
+            <p># Links Found: <strong>{{ links_info.count }}</strong></p>
+            <p>Links File: <strong>{{ links_info.filename }}</strong></p>
+            <p>Results File: <strong>{{ results_filename }}</strong></p>
+            <p>Keywords being searched: <span class="text-success">{{ keywords }}</span></p>
+            {% if user_role != 'guest' %}
+            <div class="keywords-input">
+                <form action="/update-keywords" method="post">
+                    <div class="form-group">
+                        <label for="new_keywords">Enter New Keywords:</label>
+                        <input type="text" class="form-control" id="new_keywords" name="new_keywords" placeholder="Enter keywords separated by commas">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Update Keywords & Restart</button>
+                </form>
+            </div>
+            <div class="add-channel">
+                <form action="/add-channel" method="post">
+                    <div class="form-group">
+                        <label for="new_channel">Add New Telegram Channel:</label>
+                        <input type="text" class="form-control" id="new_channel" name="new_channel" placeholder="Enter full Telegram channel URL">
+                    </div>
+                    <button type="submit" class="btn btn-success">Add Channel</button>
+                </form>
+            </div>
+            <div class="add-whitelist-ip">
+                <form action="/add-whitelist-ip" method="post">
+                    <div class="form-group">
+                        <label for="new_ip">Add New IP to Whitelist:</label>
+                        <input type="text" class="form-control" id="new_ip" name="new_ip" placeholder="Enter IP address">
+                    </div>
+                    <button type="submit" class="btn btn-info">Add IP</button>
+                </form>
+            </div>
+            {% endif %}
+            <div class="restart-scrape">
+                <form action="/restart-scrape" method="post">
+                    <button type="submit" class="btn btn-secondary">Restart Scrape</button>
+                </form>
+            </div>
+            <div class="logout">
+                <form action="/logout" method="post">
+                    <button type="submit" class="btn btn-danger">Logout</button>
+                </form>
+            </div>
+        </div>
+        <div class="warning-container">
+            <p class="text-warning">{{ warning_message }}</p>
+        </div>
+        {% if results %}
+            {% for result in results %}
+                <div class="result">
+                    <p>{{ result }}</p>
+                </div>
+            {% endfor %}
+            <div class="download-matched-files">
+                <a href="{{ url_for('download_matched_files') }}" class="btn btn-info">Download Matched Files</a>
+            </div>
+        {% else %}
+            <p class="text-center">No results found.</p>
+        {% endif %}
+        <div class="file-downloads">
+            <h4>Download Files:</h4>
+            <ul class="list-group">
+                {% for file in files %}
+                    <li class="list-group-item">
+                        {{ file }}
+                        <a href="{{ url_for('download_file', filename=file) }}" class="btn btn-info btn-sm float-right">Download</a>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    <!-- Optional JavaScript and Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        window.onbeforeunload = function() {
+            return "Are you sure you want to leave? The current scrape will be stopped.";
+        };
+    </script>
+</body>
+</html>
